@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹性计算负荷参与需求响应</title>
+<style>
+@page{size:A4;margin:20mm}
+html{scroll-behavior:smooth}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#ffffff;--bg2:#f8fafc;--card:#ffffff;--accent:#059669;--accent2:#0284c7;--accent3:#d97706;--text:#1e293b;--dim:#64748b;--border:#e2e8f0;--shadow:0 4px 24px rgba(0,0,0,0.06);--shadow-hover:0 12px 40px rgba(5,150,105,0.12);--glow:rgba(5,150,105,0.08);--glow2:rgba(2,132,199,0.06)}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans SC','Segoe UI',system-ui,sans-serif;line-height:1.7;overflow-x:hidden}
+
+/* Lang Switch */
+.lang-btn{position:fixed;top:20px;right:20px;z-index:100;padding:10px 22px;font-size:14px;font-weight:700;border-radius:30px;border:2px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 12px rgba(5,150,105,0.3)}
+.lang-btn:hover{background:transparent;color:var(--accent)}
+.lang-btn.en{border-color:var(--accent2);background:var(--accent2)}
+.lang-btn.en:hover{background:transparent;color:var(--accent2)}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:60px 40px;background:linear-gradient(180deg,#f0fdf4 0%,#ecfeff 50%,#f8fafc 100%);position:relative;overflow:hidden}
+.hero-bg{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;opacity:0.7}
+.hero-logo{font-size:80px;margin-bottom:20px;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(5,150,105,0.2))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hero-title{font-size:clamp(36px,5vw,56px);font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+.hero-sub{font-size:clamp(16px,2.2vw,22px);color:var(--dim);font-weight:400;margin-bottom:40px;max-width:700px}
+.hero-tagline{font-size:18px;color:var(--accent);font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.cta-btn{display:inline-block;padding:16px 48px;font-size:18px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50px;text-decoration:none;transition:all 0.3s;box-shadow:0 4px 20px rgba(5,150,105,0.3);border:none;cursor:pointer}
+.cta-btn:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(5,150,105,0.4)}
+
+.section{padding:80px 40px;max-width:1100px;margin:0 auto}
+.section-title{font-size:36px;font-weight:800;margin-bottom:12px;text-align:center;color:var(--text)}
+.section-subtitle{font-size:16px;color:var(--dim);text-align:center;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.section-title-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:40px}
+.section-title-bar::before,.section-title-bar::after{content:'';width:40px;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px}
+
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.feat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;transition:all 0.3s;box-shadow:var(--shadow)}
+.feat-card:hover{border-color:var(--accent);transform:translateY(-6px);box-shadow:var(--shadow-hover)}
+.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:0;transition:opacity 0.3s;border-radius:16px 16px 0 0}
+.feat-card{position:relative;overflow:hidden}
+.feat-card:hover::before{opacity:1}
+.feat-icon{font-size:40px;margin-bottom:16px}
+.feat-name{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--accent)}
+.feat-desc{font-size:15px;color:var(--dim);line-height:1.8}
+
+.perf-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:48px;box-shadow:var(--shadow)}
+.perf-row{display:flex;gap:40px;margin-bottom:32px;flex-wrap:wrap}
+.perf-item{flex:1;min-width:250px}
+.perf-label{font-size:14px;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.perf-value{font-size:32px;font-weight:800;color:var(--accent);margin-bottom:4px}
+.perf-note{font-size:14px;color:var(--accent2)}
+
+.power-bar-wrap{margin:40px 0 20px;position:relative;height:60px;background:#f0fdf4;border-radius:12px;overflow:hidden;border:1px solid #bbf7d0}
+.power-bar{position:absolute;left:0;top:0;height:100%;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 2s ease-in-out;display:flex;align-items:center;justify-content:flex-end;padding-right:12px;font-size:14px;font-weight:700;color:#fff}
+.power-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:8px}
+
+.timeline{display:flex;gap:0;margin:40px 0;position:relative}
+.timeline-step{flex:1;text-align:center;position:relative;padding:20px 8px}
+.timeline-step::after{content:'';position:absolute;top:40px;left:0;right:0;height:3px;background:#d1fae5}
+.timeline-step:last-child::after{display:none}
+.timeline-dot{width:16px;height:16px;border-radius:50%;background:var(--accent);margin:0 auto 16px;box-shadow:0 0 12px rgba(5,150,105,0.3);position:relative;z-index:1}
+.timeline-time{font-size:28px;font-weight:800;color:var(--accent)}
+.timeline-pct{font-size:20px;font-weight:700;color:var(--accent2)}
+.timeline-desc{font-size:13px;color:var(--dim);margin-top:4px}
+
+.service-stack{display:flex;flex-direction:column;gap:20px}
+.service-layer{background:var(--card);border-radius:16px;padding:28px 32px;border:1px solid var(--border);transition:all 0.3s;box-shadow:var(--shadow);position:relative}
+.service-layer:hover{border-color:var(--accent);transform:translateX(8px);box-shadow:var(--shadow-hover)}
+.service-layer-num{position:absolute;right:24px;top:24px;font-size:48px;font-weight:800;color:#f0fdf4}
+.service-layer-title{font-size:20px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.service-layer-desc{font-size:15px;color:var(--dim);line-height:1.7}
+.service-layer-features{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.service-layer-tag{font-size:12px;padding:4px 12px;border-radius:20px;background:#f0fdf4;color:var(--accent);border:1px solid #bbf7d0}
+
+.use-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.use-card{background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:1px solid #bbf7d0;border-radius:16px;padding:32px;transition:all 0.3s}
+.use-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.use-icon{font-size:36px;margin-bottom:12px}
+.use-title{font-size:20px;font-weight:700;color:var(--accent2);margin-bottom:8px}
+.use-desc{font-size:15px;color:var(--dim);line-height:1.8}
+.use-revenue{font-size:14px;color:var(--accent);font-weight:600;margin-top:12px;padding:8px 0;border-top:1px solid #bbf7d0}
+
+.contact{padding:80px 40px;text-align:center;background:linear-gradient(180deg,#f8fafc 0%,#f0fdf4 100%)}
+.contact-title{font-size:36px;font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.contact-desc{font-size:18px;color:var(--dim);margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.contact-grid{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.contact-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 32px;text-align:center;flex:1;max-width:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.contact-item-icon{font-size:32px;margin-bottom:8px}
+.contact-item-label{font-size:14px;color:var(--dim);margin-bottom:4px}
+.contact-item-value{font-size:16px;font-weight:700;color:var(--accent)}
+
+.footer{padding:32px 40px;text-align:center;border-top:1px solid var(--border);background:#f8fafc}
+.footer-text{font-size:13px;color:var(--dim)}
+
+/* Section alternate background */
+.section-alt{background:#f8fafc}
+.section-alt .section{max-width:1100px}
+
+/* Energy decorative band */
+.energy-band{height:6px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3),var(--accent2),var(--accent));opacity:0.8}
+
+/* Image banner */
+.img-banner{width:100%;border-radius:16px;overflow:hidden;margin:24px 0;box-shadow:var(--shadow)}
+.img-banner svg{width:100%;height:auto;display:block}
+
+/* Side navigation */
+.side-nav{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:90;display:flex;flex-direction:column;gap:4px;padding:8px 6px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-radius:12px 0 0 12px;border:1px solid var(--border);border-right:none;box-shadow:-2px 0 16px rgba(0,0,0,0.06);transition:all 0.3s}
+.side-nav:hover{padding-right:10px}
+.side-nav a{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;text-decoration:none;color:var(--dim);font-size:13px;font-weight:500;white-space:nowrap;transition:all 0.2s;overflow:hidden;max-width:44px}
+.side-nav:hover a{max-width:200px}
+.side-nav a:hover{background:#f0fdf4;color:var(--accent)}
+.side-nav a.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 2px 8px rgba(5,150,105,0.3)}
+.side-nav a .nav-icon{font-size:16px;min-width:20px;text-align:center;flex-shrink:0}
+.side-nav a .nav-label{opacity:0;transition:opacity 0.2s;font-size:13px}
+.side-nav:hover a .nav-label{opacity:1}
+.side-nav a.active .nav-label{opacity:1}
+.side-nav-toggle{display:none;position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:89;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(5,150,105,0.3)}
+
+@media(max-width:768px){
+.hero{padding:40px 20px}
+.hero-logo{font-size:56px}
+.section{padding:40px 20px}
+.perf-row{flex-direction:column;gap:20px}
+.timeline{flex-direction:column}
+.timeline-step::after{display:none}
+.service-layer{padding:20px}
+.use-grid{grid-template-columns:1fr}
+.lang-btn{top:12px;right:12px;padding:8px 14px;font-size:12px}
+.side-nav{display:none}
+.side-nav-toggle{display:flex;align-items:center;justify-content:center}
+.side-nav.open{display:flex}
+}
+</style>
+</head>
+<body>
+
+<!-- Side Navigation -->
+<nav class="side-nav" id="sideNav">
+  <a href="#hero" class="active" data-section="hero" onclick="navClick(event)">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label" data-zh="首页" data-en="Home">首页</span>
+  </a>
+  <a href="#features" data-section="features" onclick="navClick(event)">
+    <span class="nav-icon">🎯</span>
+    <span class="nav-label" data-zh="核心功能" data-en="Features">核心功能</span>
+  </a>
+  <a href="#performance" data-section="performance" onclick="navClick(event)">
+    <span class="nav-icon">⚡</span>
+    <span class="nav-label" data-zh="产品性能" data-en="Performance">产品性能</span>
+  </a>
+  <a href="#services" data-section="services" onclick="navClick(event)">
+    <span class="nav-icon">🔧</span>
+    <span class="nav-label" data-zh="一条龙服务" data-en="Services">一条龙服务</span>
+  </a>
+  <a href="#usecases" data-section="usecases" onclick="navClick(event)">
+    <span class="nav-icon">🔄</span>
+    <span class="nav-label" data-zh="应用场景" data-en="Use Cases">应用场景</span>
+  </a>
+  <a href="#comparison" data-section="comparison" onclick="navClick(event)">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label" data-zh="优势对比" data-en="Comparison">优势对比</span>
+  </a>
+  <a href="#vision" data-section="vision" onclick="navClick(event)">
+    <span class="nav-icon">🌍</span>
+    <span class="nav-label" data-zh="合作愿景" data-en="Vision">合作愿景</span>
+  </a>
+  <a href="#contact" data-section="contact" onclick="navClick(event)">
+    <span class="nav-icon">📧</span>
+    <span class="nav-label" data-zh="联系我们" data-en="Contact">联系我们</span>
+  </a>
+</nav>
+
+<!-- Language Switch -->
+<button class="lang-btn" id="langBtn" onclick="switchLang()">EN</button>
+
+<!-- Hero -->
+<section class="hero" id="hero">
+  <!-- Background decorative SVG -->
+  <svg class="hero-bg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- Wind turbines -->
+    <g transform="translate(100,100)" opacity="0.12" fill="none" stroke="#059669" stroke-width="2">
+      <line x1="0" y1="0" x2="0" y2="120"/>
+      <circle cx="0" cy="0" r="4" fill="#059669"/>
+      <line x1="0" y1="0" x2="-35" y2="-50"/>
+      <line x1="0" y1="0" x2="35" y2="-50"/>
+      <line x1="0" y1="0" x2="0" y2="-60"/>
+    </g>
+    <g transform="translate(1050,80)" opacity="0.1" fill="none" stroke="#0284c7" stroke-width="2">
+      <line x1="0" y1="0" x2="0" y2="100"/>
+      <circle cx="0" cy="0" r="3" fill="#0284c7"/>
+      <line x1="0" y1="0" x2="-30" y2="-45"/>
+      <line x1="0" y1="0" x2="30" y2="-45"/>
+      <line x1="0" y1="0" x2="0" y2="-55"/>
+    </g>
+    <g transform="translate(900,600)" opacity="0.08" fill="none" stroke="#059669" stroke-width="2">
+      <line x1="0" y1="0" x2="0" y2="80"/>
+      <circle cx="0" cy="0" r="3" fill="#059669"/>
+      <line x1="0" y1="0" x2="-25" y2="-38"/>
+      <line x1="0" y1="0" x2="25" y2="-38"/>
+      <line x1="0" y1="0" x2="0" y2="-45"/>
+    </g>
+    <!-- Solar panels -->
+    <g transform="translate(180,650)" opacity="0.1">
+      <rect x="0" y="0" width="60" height="40" rx="2" fill="none" stroke="#d97706" stroke-width="1.5"/>
+      <line x1="20" y1="0" x2="20" y2="40" stroke="#d97706" stroke-width="1"/>
+      <line x1="40" y1="0" x2="40" y2="40" stroke="#d97706" stroke-width="1"/>
+      <line x1="0" y1="20" x2="60" y2="20" stroke="#d97706" stroke-width="1"/>
+      <line x1="30" y1="40" x2="30" y2="55" stroke="#d97706" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(260,670)" opacity="0.08">
+      <rect x="0" y="0" width="50" height="35" rx="2" fill="none" stroke="#d97706" stroke-width="1.5"/>
+      <line x1="17" y1="0" x2="17" y2="35" stroke="#d97706" stroke-width="1"/>
+      <line x1="33" y1="0" x2="33" y2="35" stroke="#d97706" stroke-width="1"/>
+      <line x1="0" y1="17" x2="50" y2="17" stroke="#d97706" stroke-width="1"/>
+      <line x1="25" y1="35" x2="25" y2="48" stroke="#d97706" stroke-width="1.5"/>
+    </g>
+    <!-- Power lines -->
+    <path d="M0 200 Q300 180 600 210 Q900 240 1200 200" fill="none" stroke="#059669" stroke-width="1" opacity="0.06" stroke-dasharray="8 4"/>
+    <path d="M0 400 Q400 380 800 410 Q1000 430 1200 400" fill="none" stroke="#0284c7" stroke-width="1" opacity="0.05" stroke-dasharray="6 6"/>
+    <!-- Lightning bolt -->
+    <g transform="translate(700,120)" opacity="0.08">
+      <polygon points="0,0 8,20 -2,18 6,40 -12,15 0,17" fill="#d97706"/>
+    </g>
+    <!-- Leaf shapes -->
+    <g transform="translate(50,350)" opacity="0.06">
+      <ellipse cx="20" cy="10" rx="20" ry="10" fill="#059669" transform="rotate(-30 20 10)"/>
+    </g>
+    <g transform="translate(1100,450)" opacity="0.05">
+      <ellipse cx="15" cy="8" rx="15" ry="8" fill="#059669" transform="rotate(20 15 8)"/>
+    </g>
+  </svg>
+
+  <div class="hero-logo">
+    <svg viewBox="0 0 200 150" width="320" height="240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#059669"/>
+          <stop offset="100%" stop-color="#0284c7"/>
+        </linearGradient>
+        <linearGradient id="leftGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#8f9e4a"/>
+          <stop offset="100%" stop-color="#6d7c30"/>
+        </linearGradient>
+        <linearGradient id="rightGrad" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0ea5e9"/>
+          <stop offset="100%" stop-color="#6366f1"/>
+        </linearGradient>
+        <filter id="balShadow" x="-10%" y="-10%" width="120%" height="130%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#059669" flood-opacity="0.15"/>
+        </filter>
+      </defs>
+      <!-- Base pedestal -->
+      <path d="M82,142 L118,142 L112,120 L88,120 Z" fill="url(#balGrad)" opacity="0.9"/>
+      <!-- Vertical pillar -->
+      <rect x="96" y="52" width="8" height="70" rx="3" fill="url(#balGrad)"/>
+      <!-- Horizontal beam (横杠) -->
+      <rect x="16" y="50" width="168" height="7" rx="3.5" fill="url(#balGrad)" filter="url(#balShadow)"/>
+      <!-- Pivot cap on beam center - prominent BTC icon -->
+      <circle cx="100" cy="53" r="14" fill="#fff" stroke="url(#balGrad)" stroke-width="2.5" filter="url(#balShadow)"/>
+      <!-- Bold BTC symbol, perfectly centered in circle -->
+      <text x="100" y="53" text-anchor="middle" dominant-baseline="central" font-size="20" font-weight="900" font-family="Arial,sans-serif" fill="#f7931a">₿</text>
+      <!-- Left chains -->
+      <line x1="38" y1="57" x2="38" y2="80" stroke="#6d7c30" stroke-width="1.8"/>
+      <line x1="24" y1="57" x2="24" y2="80" stroke="#6d7c30" stroke-width="1.8"/>
+      <line x1="52" y1="57" x2="52" y2="80" stroke="#6d7c30" stroke-width="1.8"/>
+      <!-- Left pan (用电) -->
+      <ellipse cx="38" cy="83" rx="32" ry="7" fill="url(#leftGrad)" opacity="0.9"/>
+      <!-- Plug icon (用电) -->
+      <rect x="28" y="62" width="20" height="14" rx="3" fill="#fff" stroke="#6d7c30" stroke-width="1.8"/>
+      <line x1="33" y1="62" x2="33" y2="56" stroke="#6d7c30" stroke-width="2" stroke-linecap="round"/>
+      <line x1="43" y1="62" x2="43" y2="56" stroke="#6d7c30" stroke-width="2" stroke-linecap="round"/>
+      <path d="M38,65 L36,70 L40,70 L38,74" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Right chains -->
+      <line x1="162" y1="57" x2="162" y2="80" stroke="#0ea5e9" stroke-width="1.8"/>
+      <line x1="148" y1="57" x2="148" y2="80" stroke="#0ea5e9" stroke-width="1.8"/>
+      <line x1="176" y1="57" x2="176" y2="80" stroke="#0ea5e9" stroke-width="1.8"/>
+      <!-- Right pan (新能源发电) -->
+      <ellipse cx="162" cy="83" rx="32" ry="7" fill="url(#rightGrad)" opacity="0.9"/>
+      <!-- Sun icon (太阳能) -->
+      <circle cx="150" cy="69" r="6" fill="none" stroke="#0ea5e9" stroke-width="1.8"/>
+      <circle cx="150" cy="69" r="2.2" fill="#fbbf24"/>
+      <line x1="150" y1="60" x2="150" y2="57" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="150" y1="78" x2="150" y2="81" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="141" y1="69" x2="138" y2="69" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="159" y1="69" x2="162" y2="69" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="144" y1="63" x2="142" y2="61" stroke="#0ea5e9" stroke-width="1.3" stroke-linecap="round"/>
+      <line x1="156" y1="75" x2="158" y2="77" stroke="#0ea5e9" stroke-width="1.3" stroke-linecap="round"/>
+      <line x1="156" y1="63" x2="158" y2="61" stroke="#0ea5e9" stroke-width="1.3" stroke-linecap="round"/>
+      <line x1="144" y1="75" x2="142" y2="77" stroke="#0ea5e9" stroke-width="1.3" stroke-linecap="round"/>
+      <!-- Wind turbine icon -->
+      <line x1="173" y1="81" x2="173" y2="62" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="173" cy="62" r="2.5" fill="#6366f1"/>
+      <line x1="173" y1="62" x2="168" y2="56" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="173" y1="62" x2="178" y2="68" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="173" y1="62" x2="173" y2="53" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- Energy flow arrows on beam -->
+      <path d="M55,53 L70,53" stroke="#6d7c30" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      <path d="M130,53 L145,53" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      <polygon points="70,53 66,51 66,55" fill="#6d7c30" opacity="0.6"/>
+      <polygon points="130,53 134,51 134,55" fill="#0ea5e9" opacity="0.6"/>
+    </svg>
+  </div>
+  <div class="hero-tagline" data-zh="Mining Farm Energy Management System" data-en="Mining Farm Energy Management System">Mining Farm Energy Management System</div>
+  <h1 class="hero-title" data-zh="弹性计算负荷参与需求响应" data-en="Flexible Compute Load for Demand Response">弹性计算负荷参与需求响应</h1>
+  <p class="hero-sub" data-zh="10秒级负荷调节 × 30%~100%额定功率范围内灵活调节 × 需求响应智能调度<br>让矿场成为电网的灵活资源，让电力系统更智能" data-en="10s load adjustment × 30%~100% flexible regulation × Smart DR dispatch<br>Transforming mining farms into flexible grid resources">10秒级负荷调节 × 30%~100%额定功率范围内灵活调节 × 需求响应智能调度<br>让矿场成为电网的灵活资源，让电力系统更智能</p>
+  <a href="#contact" class="cta-btn" data-zh="联系我们" data-en="Contact Us">联系我们</a>
+</section>
+
+<div class="energy-band"></div>
+
+<!-- Renewable energy illustration banner -->
+<div class="section">
+  <div class="img-banner">
+    <svg viewBox="0 0 1100 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ecfeff"/>
+          <stop offset="100%" stop-color="#f0fdf4"/>
+        </linearGradient>
+        <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#86efac"/>
+          <stop offset="100%" stop-color="#4ade80"/>
+        </linearGradient>
+      </defs>
+      <rect width="1100" height="200" fill="url(#sky)" rx="16"/>
+      <!-- Sun -->
+      <circle cx="900" cy="50" r="30" fill="#fbbf24" opacity="0.8"/>
+      <circle cx="900" cy="50" r="38" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.3"/>
+      <!-- Clouds -->
+      <g opacity="0.4" fill="#fff">
+        <ellipse cx="200" cy="40" rx="50" ry="18"/>
+        <ellipse cx="230" cy="35" rx="35" ry="15"/>
+        <ellipse cx="170" cy="38" rx="30" ry="12"/>
+      </g>
+      <g opacity="0.3" fill="#fff">
+        <ellipse cx="600" cy="55" rx="45" ry="15"/>
+        <ellipse cx="630" cy="50" rx="30" ry="12"/>
+      </g>
+      <!-- Wind turbines -->
+      <g transform="translate(150,85)">
+        <rect x="-2" y="20" width="4" height="80" fill="#94a3b8" rx="2"/>
+        <circle cx="0" cy="20" r="5" fill="#64748b"/>
+        <g>
+          <line x1="0" y1="20" x2="-35" y2="-10" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="20" x2="30" y2="-15" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="0" y1="20" x2="5" y2="-40" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </g>
+      <g transform="translate(250,90)">
+        <rect x="-2" y="15" width="4" height="75" fill="#94a3b8" rx="2"/>
+        <circle cx="0" cy="15" r="4" fill="#64748b"/>
+        <g>
+          <line x1="0" y1="15" x2="-28" y2="-8" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="0" y1="15" x2="25" y2="-12" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="0" y1="15" x2="3" y2="-35" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+      </g>
+      <!-- Solar panels -->
+      <g transform="translate(420,120)">
+        <rect x="0" y="0" width="80" height="50" rx="3" fill="#3b82f6" opacity="0.6" stroke="#1d4ed8" stroke-width="1"/>
+        <line x1="27" y1="0" x2="27" y2="50" stroke="#1d4ed8" stroke-width="0.5" opacity="0.5"/>
+        <line x1="53" y1="0" x2="53" y2="50" stroke="#1d4ed8" stroke-width="0.5" opacity="0.5"/>
+        <line x1="0" y1="25" x2="80" y2="25" stroke="#1d4ed8" stroke-width="0.5" opacity="0.5"/>
+        <line x1="40" y1="50" x2="40" y2="65" stroke="#94a3b8" stroke-width="2"/>
+      </g>
+      <g transform="translate(520,125)">
+        <rect x="0" y="0" width="70" height="45" rx="3" fill="#3b82f6" opacity="0.5" stroke="#1d4ed8" stroke-width="1"/>
+        <line x1="23" y1="0" x2="23" y2="45" stroke="#1d4ed8" stroke-width="0.5" opacity="0.5"/>
+        <line x1="47" y1="0" x2="47" y2="45" stroke="#1d4ed8" stroke-width="0.5" opacity="0.5"/>
+        <line x1="0" y1="22" x2="70" y2="22" stroke="#1d4ed8" stroke-width="0.5" opacity="0.5"/>
+        <line x1="35" y1="45" x2="35" y2="58" stroke="#94a3b8" stroke-width="2"/>
+      </g>
+      <!-- Mining farm container -->
+      <g transform="translate(680,115)">
+        <rect x="0" y="0" width="100" height="55" rx="4" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+        <rect x="8" y="8" width="20" height="14" rx="2" fill="#059669" opacity="0.3"/>
+        <rect x="8" y="26" width="20" height="14" rx="2" fill="#059669" opacity="0.3"/>
+        <rect x="32" y="8" width="20" height="14" rx="2" fill="#059669" opacity="0.3"/>
+        <rect x="32" y="26" width="20" height="14" rx="2" fill="#059669" opacity="0.3"/>
+        <rect x="56" y="8" width="20" height="14" rx="2" fill="#0284c7" opacity="0.3"/>
+        <rect x="56" y="26" width="20" height="14" rx="2" fill="#0284c7" opacity="0.3"/>
+        <!-- Lightning icon -->
+        <polygon points="84,10 92,28 86,26 90,42 80,22 87,24" fill="#d97706" opacity="0.7"/>
+        <text x="50" y="72" text-anchor="middle" font-size="11" fill="#64748b" font-family="system-ui">Mining Farm + DR</text>
+      </g>
+      <!-- Power grid lines -->
+      <path d="M330 140 Q375 100 420 120" fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="4 3" opacity="0.4"/>
+      <path d="M590 140 Q635 110 680 125" fill="none" stroke="#059669" stroke-width="2" stroke-dasharray="4 3" opacity="0.4"/>
+      <path d="M280 140 Q350 80 420 120" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.3"/>
+      <!-- Ground -->
+      <rect x="0" y="175" width="1100" height="25" fill="url(#ground)" rx="0"/>
+      <rect x="0" y="175" width="1100" height="4" fill="#4ade80" opacity="0.5"/>
+      <!-- Grid connection symbol -->
+      <g transform="translate(830,125)">
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#059669" stroke-width="2" opacity="0.4"/>
+        <text x="0" y="5" text-anchor="middle" font-size="14" fill="#059669" font-family="system-ui" opacity="0.6">⚡</text>
+        <line x1="20" y1="0" x2="45" y2="0" stroke="#059669" stroke-width="1.5" opacity="0.3" stroke-dasharray="3 3"/>
+        <text x="65" y="4" text-anchor="middle" font-size="10" fill="#059669" opacity="0.5" font-family="system-ui">Grid</text>
+      </g>
+      <!-- Arrows showing energy flow -->
+      <g opacity="0.3">
+        <path d="M320 135 L340 125" stroke="#059669" stroke-width="2" marker-end="url(#arrowG)"/>
+        <path d="M600 135 L620 125" stroke="#059669" stroke-width="2"/>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<!-- Features -->
+<section class="section" id="features">
+  <div class="section-title" data-zh="核心功能" data-en="Core Features">核心功能</div>
+  <div class="section-title-bar"><div></div></div>
+  <div class="section-subtitle" data-zh="从精准负荷调节到智能收益优化，一站式覆盖需求响应全链路" data-en="Full-chain DR solution: precise load control, smart dispatch, dual revenue">从精准负荷调节到智能收益优化，一站式覆盖需求响应全链路</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-name" data-zh="精准负荷调节" data-en="Precise Load Control">精准负荷调节</div>
+      <div class="feat-desc" data-zh="矿场功耗可在30%~100%额定范围内任意上下调节，10秒内完成切换。步进精度1%，支持连续平滑调节，精准匹配电网调度需求。" data-en="Adjust power 30%~100% within 10 seconds. 1% step precision, smooth continuous regulation.">矿场功耗可在30%~100%额定范围内任意上下调节，10秒内完成切换。步进精度1%，支持连续平滑调节，精准匹配电网调度需求。</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📡</div>
+      <div class="feat-name" data-zh="电网信号响应" data-en="Grid Signal Response">电网信号响应</div>
+      <div class="feat-desc" data-zh="实时接收电网频率信号与TSO调度指令，自动执行负荷增减，满足欧洲aFRR/mFRR标准。" data-en="Real-time TSO signal reception, automatic load adjustment via IEC 61850 / OPC-UA. Meets aFRR/mFRR standards.">实时接收电网频率信号与TSO调度指令，自动执行负荷增减，满足欧洲aFRR/mFRR标准。</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <div class="feat-name" data-zh="智能调度决策" data-en="Smart Dispatch Engine">智能调度决策</div>
+      <div class="feat-desc" data-zh="基于电价信号、DR容量合同、BTC收益模型的多目标优化。自动判断何时满载挖矿、何时降载响应、何时吃负电价——每一度电都赚到最大价值。" data-en="Multi-objective optimization: auto-decide mine full, curtail for DR, or absorb negative prices. Maximize every kWh.">基于电价信号、DR容量合同、BTC收益模型的多目标优化。自动判断何时满载挖矿、何时降载响应、何时吃负电价——每一度电都赚到最大价值。</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">💰</div>
+      <div class="feat-name" data-zh="双轨收益引擎" data-en="Dual Revenue Engine">双轨收益引擎</div>
+      <div class="feat-desc" data-zh="挖矿收入 + 需求响应收入双轨并行。BTC行情好靠挖矿赚钱，行情差靠DR赚钱；电价高靠DR避费，电价低靠挖矿吃便宜电。永远有现金流。" data-en="Mining + DR dual revenue. Always cash-flow positive regardless of market conditions.">挖矿收入 + 需求响应收入双轨并行。BTC行情好靠挖矿赚钱，行情差靠DR赚钱；电价高靠DR避费，电价低靠挖矿吃便宜电。永远有现金流。</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🛡️</div>
+      <div class="feat-name" data-zh="安全与合规" data-en="Safety & Compliance">安全与合规</div>
+      <div class="feat-desc" data-zh="1秒级实时数据上报，满足ENTSO-E测量要求。支持聚合商模式快速准入，或独立投标模式更高利润。全程合规可审计。" data-en="1s real-time reporting, ENTSO-E compliant. Aggregator or independent bidding modes available.">1秒级实时数据上报，满足ENTSO-E测量要求。支持聚合商模式快速准入，或独立投标模式更高利润。全程合规可审计。</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🌍</div>
+      <div class="feat-name" data-zh="超低电价获取" data-en="Ultra-Low Electricity">超低电价获取</div>
+      <div class="feat-desc" data-zh="参与DR即可签订&quot;可中断负荷PPA&quot;，电价直降30~40%。加上DR收入抵减、4CP避峰节省、负电价吃电收益，实际综合电价可降至€17~€33/MWh。" data-en="DR unlocks &quot;interruptible load PPA&quot;, cutting price 30~40%. Effective cost down to €17~€33/MWh.">参与DR即可签订"可中断负荷PPA"，电价直降30~40%。加上DR收入抵减、4CP避峰节省、负电价吃电收益，实际综合电价可降至€17~€33/MWh。</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-alt">
+<!-- Performance -->
+<section class="section" id="performance">
+  <div class="section-title" data-zh="产品性能" data-en="Product Performance">产品性能</div>
+  <div class="section-title-bar"><div></div></div>
+  <div class="perf-box">
+    <h3 style="font-size:22px;font-weight:700;margin-bottom:32px;color:var(--accent);" data-zh="⚡ 两种调节模式，适配不同电网场景" data-en="⚡ Two Regulation Modes">⚡ 两种调节模式，适配不同电网场景</h3>
+
+    <div style="background:#f0fdf4;border-radius:16px;padding:28px;margin-bottom:24px;border:1px solid #bbf7d0">
+      <div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px" data-zh="模式A — 灵活调节（aFRR/mFRR场景）" data-en="Mode A — Flexible (aFRR/mFRR)">模式A — 灵活调节（aFRR/mFRR场景）</div>
+      <div class="perf-row">
+        <div class="perf-item">
+          <div class="perf-label" data-zh="调节范围" data-en="Regulation Range">调节范围</div>
+          <div class="perf-value">30%~100%</div>
+          <div class="perf-note" data-zh="范围内任意上下调节" data-en="Freely adjustable">范围内任意上下调节</div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-label" data-zh="响应时间" data-en="Response Time">响应时间</div>
+          <div class="perf-value">&lt; 10s</div>
+          <div class="perf-note" data-zh="远超aFRR ≤5分钟标准" data-en="Far exceeds aFRR ≤5min">远超aFRR ≤5分钟标准</div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-label" data-zh="持续时间" data-en="Duration">持续时间</div>
+          <div class="perf-value" data-zh="无限" data-en="∞ Unlimited">无限</div>
+          <div class="perf-note" data-zh="无电量约束，远超储能1~4h限制" data-en="No energy limit, vs 1~4h storage">无电量约束，远超储能1~4h限制</div>
+        </div>
+      </div>
+      <div class="power-bar-wrap">
+        <div class="power-bar" id="barA" style="width:100%">100%</div>
+      </div>
+      <div class="power-labels"><span>30%</span><span>50%</span><span>70%</span><span>100%</span></div>
+    </div>
+
+    <div style="background:#ecfeff;border-radius:16px;padding:28px;margin-bottom:24px;border:1px solid #a5f3fc">
+      <div style="font-size:16px;font-weight:700;color:var(--accent2);margin-bottom:12px" data-zh="模式B — 深度调节（mFRR/极端套利场景）" data-en="Mode B — Deep (mFRR/Arbitrage)">模式B — 深度调节（mFRR/极端套利场景）</div>
+      <div class="perf-row">
+        <div class="perf-item">
+          <div class="perf-label" data-zh="降载深度" data-en="Curtailment Depth">降载深度</div>
+          <div class="perf-value">100% → 3%</div>
+          <div class="perf-note" data-zh="97%正向调节容量，近乎全停" data-en="97% upward capacity, near-full stop">97%正向调节容量，近乎全停</div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-label" data-zh="降载时间" data-en="Curtailment Time">降载时间</div>
+          <div class="perf-value">&lt; 10s</div>
+          <div class="perf-note" data-zh="群控调度器批量执行" data-en="Batch execution">群控调度器批量执行</div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-label" data-zh="恢复时间" data-en="Recovery Time">恢复时间</div>
+          <div class="perf-value">&lt; 10min</div>
+          <div class="perf-note" data-zh="渐进恢复，保护矿机硬件" data-en="Gradual, protects hardware">渐进恢复，保护矿机硬件</div>
+        </div>
+      </div>
+      <div class="timeline">
+        <div class="timeline-step">
+          <div class="timeline-dot"></div>
+          <div class="timeline-time">0s</div>
+          <div class="timeline-pct">100%</div>
+          <div class="timeline-desc" data-zh="接到调度指令" data-en="Dispatch command received">接到调度指令</div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-dot" style="background:var(--accent2)"></div>
+          <div class="timeline-time">10s</div>
+          <div class="timeline-pct">3%</div>
+          <div class="timeline-desc" data-zh="深度降载完成" data-en="Deep curtailment complete">深度降载完成</div>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-dot"></div>
+          <div class="timeline-time">~10min</div>
+          <div class="timeline-pct">100%</div>
+          <div class="timeline-desc" data-zh="满载恢复" data-en="Full load recovered">满载恢复</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px">
+      <div style="flex:1;min-width:150px;background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;border:1px solid #bbf7d0">
+        <div style="font-size:13px;color:var(--dim)" data-zh="步进精度" data-en="Step Precision">步进精度</div>
+        <div style="font-size:24px;font-weight:800;color:var(--accent)">1%/步</div>
+      </div>
+      <div style="flex:1;min-width:150px;background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;border:1px solid #bbf7d0">
+        <div style="font-size:13px;color:var(--dim)" data-zh="测量上报" data-en="Measurement Reporting">测量上报</div>
+        <div style="font-size:24px;font-weight:800;color:var(--accent)">1s</div>
+      </div>
+      <div style="flex:1;min-width:150px;background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;border:1px solid #bbf7d0">
+        <div style="font-size:13px;color:var(--dim)" data-zh="可管理规模" data-en="Manageable Scale">可管理规模</div>
+        <div style="font-size:24px;font-weight:800;color:var(--accent)">100MW+</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- Services -->
+<section class="section" id="services">
+  <div class="section-title" data-zh="一条龙服务" data-en="End-to-End Solutions">一条龙服务</div>
+  <div class="section-title-bar"><div></div></div>
+  <div class="section-subtitle" data-zh="从硬件到软件，从矿机到电网准入，提供全链条解决方案" data-en="From hardware to grid access, full-chain solutions">从硬件到软件，从矿机到电网准入，提供全链条解决方案</div>
+  <div class="service-stack">
+    <div class="service-layer">
+      <div class="service-layer-num">01</div>
+      <div class="service-layer-title" data-zh="🤖 矿机供应" data-en="🤖 Miner Supply">🤖 矿机供应</div>
+      <div class="service-layer-desc" data-zh="提供高效ASIC矿机。批量采购价优，支持新旧机混编，灵活适配不同投资预算与能效需求。" data-en="High-efficiency ASIC miners. Bulk pricing, flexible for any budget.">提供高效ASIC矿机。批量采购价优，支持新旧机混编，灵活适配不同投资预算与能效需求。</div>
+      <div class="service-layer-features">
+        <span class="service-layer-tag" data-zh="高效ASIC" data-en="Efficient ASIC">高效ASIC</span>
+        <span class="service-layer-tag" data-zh="批量折扣" data-en="Bulk Discount">批量折扣</span>
+        <span class="service-layer-tag" data-zh="新旧混编" data-en="Mixed Fleet">新旧混编</span>
+        <span class="service-layer-tag" data-zh="全球物流" data-en="Global Logistics">全球物流</span>
+      </div>
+    </div>
+    <div class="service-layer">
+      <div class="service-layer-num">02</div>
+      <div class="service-layer-title" data-zh="🏗️ 矿场建设" data-en="🏗️ Farm Construction">🏗️ 矿场建设</div>
+      <div class="service-layer-desc" data-zh="从选址评估、电力接入、配电设计到散热部署，全套矿场建设方案。50MW级模块化设计，3个月快速投产。支持与风电/光伏项目共址部署。" data-en="Full construction: site eval, power, cooling. 50MW modular, 3-month deploy. Co-location with renewables.">从选址评估、电力接入、配电设计到散热部署，全套矿场建设方案。50MW级模块化设计，3个月快速投产。支持与风电/光伏项目共址部署。</div>
+      <div class="service-layer-features">
+        <span class="service-layer-tag">50MW Modular</span>
+        <span class="service-layer-tag" data-zh="高效散热" data-en="Efficient Cooling">高效散热</span>
+        <span class="service-layer-tag" data-zh="3月投产" data-en="3-Month Deploy">3月投产</span>
+        <span class="service-layer-tag" data-zh="可再生共址" data-en="RE Co-location">可再生共址</span>
+      </div>
+    </div>
+    <div class="service-layer">
+      <div class="service-layer-num">03</div>
+      <div class="service-layer-title" data-zh="⚡ 矿场能源管理系统（核心产品）" data-en="⚡ Mining EMS (Core Product)">⚡ 矿场能源管理系统（核心产品）</div>
+      <div class="service-layer-desc" data-zh="集群调度器 + 电网通信网关 + 智能决策引擎三位一体。实时监测电网信号，10秒内执行负荷调节，自动优化挖矿与DR的双轨收益。" data-en="Scheduler + grid gateway + AI engine. 10s load regulation, auto dual-revenue optimization.">集群调度器 + 电网通信网关 + 智能决策引擎三位一体。实时监测电网信号，10秒内执行负荷调节，自动优化挖矿与DR的双轨收益。</div>
+      <div class="service-layer-features">
+        <span class="service-layer-tag">10s Response</span>
+        <span class="service-layer-tag">30%~100%</span>
+        <span class="service-layer-tag">aFRR/mFRR</span>
+        <span class="service-layer-tag" data-zh="双轨优化" data-en="Dual-Track">双轨优化</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Energy flow diagram -->
+<div class="section">
+  <div class="img-banner">
+    <svg viewBox="0 0 1100 180" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1100" height="180" fill="#f0fdf4" rx="16"/>
+      <!-- Title -->
+      <text x="550" y="30" text-anchor="middle" font-size="14" fill="#059669" font-family="system-ui" font-weight="600" data-zh="能量流动示意" data-en="Energy Flow Diagram">能量流动示意</text>
+      <!-- Wind -->
+      <g transform="translate(80,75)">
+        <rect x="-45" y="-35" width="90" height="70" rx="12" fill="#fff" stroke="#059669" stroke-width="1.5"/>
+        <text x="0" y="-8" text-anchor="middle" font-size="28">🌬️</text>
+        <text x="0" y="18" text-anchor="middle" font-size="11" fill="#059669" font-family="system-ui" font-weight="600" data-zh="风电" data-en="Wind">风电</text>
+      </g>
+      <!-- Solar -->
+      <g transform="translate(270,75)">
+        <rect x="-45" y="-35" width="90" height="70" rx="12" fill="#fff" stroke="#d97706" stroke-width="1.5"/>
+        <text x="0" y="-8" text-anchor="middle" font-size="28">☀️</text>
+        <text x="0" y="18" text-anchor="middle" font-size="11" fill="#d97706" font-family="system-ui" font-weight="600" data-zh="光伏" data-en="Solar">光伏</text>
+      </g>
+      <!-- Grid -->
+      <g transform="translate(460,75)">
+        <rect x="-55" y="-40" width="110" height="80" rx="12" fill="#fff" stroke="#0284c7" stroke-width="2"/>
+        <text x="0" y="-10" text-anchor="middle" font-size="28">⚡</text>
+        <text x="0" y="16" text-anchor="middle" font-size="12" fill="#0284c7" font-family="system-ui" font-weight="700" data-zh="电网" data-en="Grid">电网</text>
+      </g>
+      <!-- Mining Farm -->
+      <g transform="translate(680,75)">
+        <rect x="-65" y="-40" width="130" height="80" rx="12" fill="#fff" stroke="#059669" stroke-width="2"/>
+        <text x="0" y="-12" text-anchor="middle" font-size="28">🏭</text>
+        <text x="0" y="16" text-anchor="middle" font-size="12" fill="#059669" font-family="system-ui" font-weight="700" data-zh="矿场+DR系统" data-en="Farm+DR System">矿场+DR系统</text>
+      </g>
+      <!-- Revenue -->
+      <g transform="translate(920,75)">
+        <rect x="-55" y="-40" width="110" height="80" rx="12" fill="#fff" stroke="#d97706" stroke-width="1.5"/>
+        <text x="0" y="-12" text-anchor="middle" font-size="28">💰</text>
+        <text x="0" y="8" text-anchor="middle" font-size="11" fill="#d97706" font-family="system-ui" font-weight="600" data-zh="双轨收益" data-en="Dual Revenue">双轨收益</text>
+        <text x="0" y="22" text-anchor="middle" font-size="10" fill="#64748b" font-family="system-ui">BTC + DR</text>
+      </g>
+      <!-- Arrows -->
+      <defs>
+        <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#059669"/>
+        </marker>
+        <marker id="arrowBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#0284c7"/>
+        </marker>
+        <marker id="arrowAmber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#d97706"/>
+        </marker>
+      </defs>
+      <line x1="128" y1="68" x2="220" y2="68" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)"/>
+      <line x1="318" y1="68" x2="400" y2="68" stroke="#d97706" stroke-width="2" marker-end="url(#arrowAmber)"/>
+      <line x1="518" y1="68" x2="610" y2="68" stroke="#0284c7" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <line x1="610" y1="88" x2="518" y2="88" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)" stroke-dasharray="5 3"/>
+      <line x1="748" y1="68" x2="860" y2="68" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)"/>
+      <!-- Labels -->
+      <text x="550" y="55" text-anchor="middle" font-size="9" fill="#64748b" font-family="system-ui" data-zh="双向能量流动" data-en="Bi-directional energy flow">双向能量流动</text>
+      <text x="550" y="105" text-anchor="middle" font-size="9" fill="#059669" font-family="system-ui" data-zh="↑ DR响应（降载释放容量）" data-en="↑ DR response (curtail to release capacity)">↑ DR响应（降载释放容量）</text>
+    </svg>
+  </div>
+</div>
+
+<div class="section-alt">
+<!-- Use Cases -->
+<section class="section" id="usecases">
+  <div class="section-title" data-zh="应用场景" data-en="Application Scenarios">应用场景</div>
+  <div class="section-title-bar"><div></div></div>
+  <div class="use-grid">
+    <div class="use-card">
+      <div class="use-icon">🔄</div>
+      <div class="use-title" data-zh="aFRR/mFRR 正向调节" data-en="aFRR/mFRR Upward Regulation">aFRR/mFRR 正向调节</div>
+      <div class="use-desc" data-zh="电网频率偏低或需要紧急备用时，矿场10秒内降载，提供正向调节容量。响应速度远超5分钟aFRR标准和12.5分钟mFRR标准，持续时间无限。" data-en="10s curtailment for upward regulation. Far exceeds aFRR/mFRR speed standards, unlimited duration.">电网频率偏低或需要紧急备用时，矿场10秒内降载，提供正向调节容量。响应速度远超5分钟aFRR标准和12.5分钟mFRR标准，持续时间无限。</div>
+      <div class="use-revenue" data-zh="📈 波海地区mFRR需求预计2031年增长<strong>+250%~+380%</strong>，市场缺口巨大" data-en="📈 Baltic mFRR demand: <strong>+250%~+380%</strong> by 2031">📈 波海地区mFRR需求预计2031年增长<strong>+250%~+380%</strong>，市场缺口巨大</div>
+    </div>
+    <div class="use-card">
+      <div class="use-icon">⚡</div>
+      <div class="use-title" data-zh="电网频率稳定" data-en="Grid Frequency Stability">电网频率稳定</div>
+      <div class="use-desc" data-zh="随着可再生能源占比持续提升，电网频率波动加剧。矿场作为大规模灵活负荷，可在频率偏低时秒级降载，帮助TSO维持电网稳定运行。" data-en="Seconds-level curtailment to help TSOs maintain grid stability as renewables grow.">随着可再生能源占比持续提升，电网频率波动加剧。矿场作为大规模灵活负荷，可在频率偏低时秒级降载，帮助TSO维持电网稳定运行。</div>
+      <div class="use-revenue" data-zh="📈 欧洲负电价时长2024年达<strong>468小时</strong>，同比+60%，电网灵活性需求持续攀升" data-en="📈 EU negative prices: <strong>468 hrs</strong> in 2024, +60% YoY">📈 欧洲负电价时长2024年达<strong>468小时</strong>，同比+60%，电网灵活性需求持续攀升</div>
+    </div>
+    <div class="use-card">
+      <div class="use-icon">📉</div>
+      <div class="use-title" data-zh="电价波动套利" data-en="Price Volatility Arbitrage">电价波动套利</div>
+      <div class="use-desc" data-zh="高电价时段降载避费，负电价时段满载吃便宜电。矿场功耗在30%~100%范围内灵活调节，让每一度电都用在最有价值的时刻。" data-en="Curtail at high prices, run full at negative prices. 30%~100% flexible regulation.">高电价时段降载避费，负电价时段满载吃便宜电。矿场功耗在30%~100%范围内灵活调节，让每一度电都用在最有价值的时刻。</div>
+      <div class="use-revenue" data-zh="📈 欧洲峰谷价差突破<strong>€85/MWh</strong>，部分地区超€100/MWh，套利空间不断扩大" data-en="📈 EU peak-to-trough spread: <strong>€85~100+/MWh</strong>">📈 欧洲峰谷价差突破<strong>€85/MWh</strong>，部分地区超€100/MWh，套利空间不断扩大</div>
+    </div>
+    <div class="use-card">
+      <div class="use-icon">🔋</div>
+      <div class="use-title" data-zh="可再生能源消纳" data-en="Renewable Energy Absorption">可再生能源消纳</div>
+      <div class="use-desc" data-zh="风电/光伏发电过剩时，矿场满载消化弃电；发电不足时，矿场降载释放容量。矿场是可再生能源的<strong>&quot;最后买家&quot;</strong>，帮助电网平衡供需。" data-en="Absorb surplus renewable energy; curtail when supply is tight. The grid's &quot;buyer of last resort&quot;.">风电/光伏发电过剩时，矿场满载消化弃电；发电不足时，矿场降载释放容量。矿场是可再生能源的<strong>"最后买家"</strong>，帮助电网平衡供需。</div>
+      <div class="use-revenue" data-zh="📈 北欧风电弃电率<strong>5%~15%</strong>，这些能源需要灵活负荷来消纳" data-en="📈 Nordic wind curtailment: <strong>5%~15%</strong>, needs flexible loads">📈 北欧风电弃电率<strong>5%~15%</strong>，这些能源需要灵活负荷来消纳</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- Comparison -->
+<section class="section" id="comparison">
+  <div class="section-title" data-zh="为什么选择矿场？" data-en="Why Choose Mining Farms?">为什么选择矿场？</div>
+  <div class="section-title-bar"><div></div></div>
+  <div style="background:var(--card);border-radius:20px;padding:32px;border:1px solid var(--border);overflow-x:auto;box-shadow:var(--shadow)">
+    <table style="width:100%;border-collapse:collapse;font-size:15px">
+      <tr style="border-bottom:2px solid #bbf7d0">
+        <th style="padding:12px;text-align:left;color:var(--accent)" data-zh="特性" data-en="Feature">特性</th>
+        <th style="padding:12px;text-align:center;color:var(--accent);font-weight:800;background:#f0fdf4;border-radius:8px 0 0 0" data-zh="矿场+我们的系统" data-en="Farm + Our System">矿场+我们的系统</th>
+        <th style="padding:12px;text-align:center;color:var(--dim)" data-zh="电池储能" data-en="Battery Storage">电池储能</th>
+        <th style="padding:12px;text-align:center;color:var(--dim)" data-zh="传统工业负荷" data-en="Traditional Industrial Load">传统工业负荷</th>
+      </tr>
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:10px;font-weight:600" data-zh="响应速度" data-en="Response Speed">响应速度</td>
+        <td style="padding:10px;text-align:center;color:var(--accent);font-weight:700;background:#f0fdf4">~10s</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)">&lt;100ms</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="分钟~小时" data-en="Minutes~Hours">分钟~小时</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:10px;font-weight:600" data-zh="调节范围" data-en="Regulation Range">调节范围</td>
+        <td style="padding:10px;text-align:center;color:var(--accent);font-weight:700;background:#f0fdf4" data-zh="30%~100%任意调节" data-en="30%~100% freely adjustable">30%~100%任意调节</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="100%（双向）" data-en="100% (bidirectional)">100%（双向）</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)">10%~30%</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:10px;font-weight:600" data-zh="持续能力" data-en="Duration Capacity">持续能力</td>
+        <td style="padding:10px;text-align:center;color:var(--accent);font-weight:700;background:#f0fdf4" data-zh="∞ 无限" data-en="∞ Unlimited">∞ 无限</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="1~4小时" data-en="1~4 hours">1~4小时</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="受工艺限制" data-en="Process-limited">受工艺限制</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:10px;font-weight:600" data-zh="投资成本" data-en="Investment Cost">投资成本</td>
+        <td style="padding:10px;text-align:center;color:var(--accent);font-weight:700;background:#f0fdf4">$0.15/W + Miners</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)">$150~300/kWh</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="低（现有负荷）" data-en="Low (existing load)">低（现有负荷）</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:10px;font-weight:600" data-zh="附加收益" data-en="Additional Revenue">附加收益</td>
+        <td style="padding:10px;text-align:center;color:var(--accent);font-weight:700;background:#f0fdf4" data-zh="挖矿+DR双收入" data-en="Mining + DR dual revenue">挖矿+DR双收入</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="仅DR收入" data-en="Only DR revenue">仅DR收入</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="仅DR收入" data-en="Only DR revenue">仅DR收入</td>
+      </tr>
+      <tr>
+        <td style="padding:10px;font-weight:600" data-zh="DR有效期" data-en="DR Validity">DR有效期</td>
+        <td style="padding:10px;text-align:center;color:var(--accent);font-weight:700;background:#f0fdf4" data-zh="5~10年（矿机寿命）" data-en="5~10 years (miner lifespan)">5~10年（矿机寿命）</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)">10~15 years</td>
+        <td style="padding:10px;text-align:center;color:var(--dim)" data-zh="不确定" data-en="Uncertain">不确定</td>
+      </tr>
+    </table>
+  </div>
+  <div style="margin-top:24px;text-align:center;font-size:16px;color:var(--accent);font-weight:600" data-zh="矿场在&quot;响应速度 × 持续能力 × 投资成本&quot;的三维空间中，占据储能和传统负荷都无法覆盖的空白区域<br>—— <span style='color:var(--accent)'>秒级响应</span> + <span style='color:var(--accent2)'>无限持续</span> + <span style='color:var(--accent)'>低投资</span> + <span style='color:var(--accent)'>双收入</span>" data-en="Mining farms fill a gap that storage and traditional loads cannot —<br><span style='color:var(--accent)'>Second-level response</span> + <span style='color:var(--accent2)'>Unlimited duration</span> + <span style='color:var(--accent)'>Low investment</span> + <span style='color:var(--accent)'>Dual revenue</span>">矿场在"响应速度 × 持续能力 × 投资成本"的三维空间中，占据储能和传统负荷都无法覆盖的空白区域<br>—— <span style="color:var(--accent)">秒级响应</span> + <span style="color:var(--accent2)">无限持续</span> + <span style="color:var(--accent)">低投资</span> + <span style="color:var(--accent)">双收入</span></div>
+</section>
+
+<div class="section-alt">
+<!-- Vision -->
+<section class="section" id="vision">
+  <div class="section-title" data-zh="合作愿景" data-en="Partnership Vision">合作愿景</div>
+  <div class="section-title-bar"><div></div></div>
+  <div style="background:linear-gradient(135deg,#f0fdf4,#ecfeff);border-radius:20px;padding:48px;border:1px solid #bbf7d0;text-align:center;box-shadow:var(--shadow)">
+    <div style="font-size:48px;margin-bottom:20px">🌍</div>
+    <div style="font-size:28px;font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" data-zh="让电力系统更加智能" data-en="Making Power Systems More Intelligent">让电力系统更加智能</div>
+    <div style="font-size:18px;color:var(--dim);max-width:700px;margin:0 auto;line-height:2" data-zh="我们寻找有电网需求响应需求的合作伙伴——<br><strong style='color:var(--accent)'>电网运营商/TSO</strong>：需要更多灵活性资源平衡电网<br><strong style='color:var(--accent)'>聚合商</strong>：需要大规模可中断负荷扩充容量池<br><strong style='color:var(--accent)'>可再生能源开发商</strong>：需要矿场消化弃电、稳定收入<br><strong style='color:var(--accent2)'>矿场投资者</strong>：需要DR收入叠加提升投资回报<br><br>矿场不只是挖矿——它是电网的<strong style='color:var(--accent)'>智能开关</strong>，<br>是可再生能源的<strong style='color:var(--accent2)'>最后买家</strong>，<br>是电力系统的<strong style='color:var(--accent)'>灵活性基石</strong>。" data-en="We seek partners with DR needs —<br><strong style='color:var(--accent)'>Grid Operators / TSOs</strong>: Flexible resources for grid balance<br><strong style='color:var(--accent)'>Aggregators</strong>: Large-scale interruptible loads<br><strong style='color:var(--accent)'>Renewable Developers</strong>: Absorb curtailed energy, stable revenue<br><strong style='color:var(--accent2)'>Mining Investors</strong>: DR revenue overlay to boost ROI<br><br>A mining farm is more than mining — it's the grid's <strong style='color:var(--accent)'>smart switch</strong>,<br>renewable energy's <strong style='color:var(--accent2)'>buyer of last resort</strong>,<br>the power system's <strong style='color:var(--accent)'>flexibility cornerstone</strong>.">我们寻找有电网需求响应需求的合作伙伴——<br><strong style="color:var(--accent)">电网运营商/TSO</strong>：需要更多灵活性资源平衡电网<br><strong style="color:var(--accent)">聚合商</strong>：需要大规模可中断负荷扩充容量池<br><strong style="color:var(--accent)">可再生能源开发商</strong>：需要矿场消化弃电、稳定收入<br><strong style="color:var(--accent2)">矿场投资者</strong>：需要DR收入叠加提升投资回报<br><br>矿场不只是挖矿——它是电网的<strong style="color:var(--accent)">智能开关</strong>，<br>是可再生能源的<strong style="color:var(--accent2)">最后买家</strong>，<br>是电力系统的<strong style="color:var(--accent)">灵活性基石</strong>。</div>
+  </div>
+</section>
+</div>
+
+<!-- Contact -->
+<section class="contact" id="contact">
+  <h2 class="contact-title" data-zh="联系我们" data-en="Contact Us">联系我们</h2>
+  <p class="contact-desc" data-zh="无论您是电网运营商、聚合商、可再生能源开发商还是矿场投资者，<br>我们都能为您提供从矿机到DR市场准入的一条龙解决方案。" data-en="End-to-end solutions from miners to DR market access, for any role.">无论您是电网运营商、聚合商、可再生能源开发商还是矿场投资者，<br>我们都能为您提供从矿机到DR市场准入的一条龙解决方案。</p>
+  <div class="contact-grid">
+    <div class="contact-item">
+      <div class="contact-item-icon">📧</div>
+      <div class="contact-item-label" data-zh="商务合作" data-en="Business">商务合作</div>
+      <div class="contact-item-value">DemandLink@pm.me</div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-item-icon">🔧</div>
+      <div class="contact-item-label" data-zh="技术咨询" data-en="Technical">技术咨询</div>
+      <div class="contact-item-value">GridFlex@pm.me</div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-item-label" style="font-size:32px;margin-bottom:8px">📍</div>
+      <div class="contact-item-label" data-zh="服务区域" data-en="Service Region">服务区域</div>
+      <div class="contact-item-value" data-zh="全球" data-en="Global">全球</div>
+    </div>
+  </div>
+  <a href="#features" class="cta-btn" style="margin-top:16px" data-zh="了解更多 ↑" data-en="Learn More ↑">了解更多 ↑</a>
+</section>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-text" data-zh="弹性计算负荷参与需求响应 © 2026 | 让电力系统更智能" data-en="Flexible Compute Load for DR © 2026 | Making Power Systems More Intelligent">弹性计算负荷参与需求响应 © 2026 | 让电力系统更智能</div>
+</div>
+
+<script>
+// Language switch
+let lang = 'zh';
+function switchLang() {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中文';
+  document.getElementById('langBtn').className = lang === 'zh' ? 'lang-btn' : 'lang-btn en';
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = lang === 'zh' ? '弹性计算负荷参与需求响应' : 'Flexible Compute Load for Demand Response';
+
+  // Update all elements with data-zh/data-en
+  document.querySelectorAll('[data-zh]').forEach(el => {
+    const text = el.getAttribute('data-' + lang);
+    if (text) {
+      if (el.tagName === 'INPUT') {
+        el.value = text;
+      } else {
+        el.innerHTML = text;
+      }
+    }
+  });
+
+  // Update power bar text
+  updateBarText();
+}
+
+function updateBarText() {
+  const bar = document.getElementById('barA');
+  if (bar) {
+    const pct = bar.style.width;
+    const pctNum = parseInt(pct);
+    if (lang === 'zh') {
+      bar.textContent = pctNum + '% 额定功率';
+    } else {
+      bar.textContent = pctNum + '% Rated Power';
+    }
+  }
+}
+
+// Power bar animation
+const barA = document.getElementById('barA');
+const steps = [100, 70, 30, 50, 100, 80, 40, 100];
+let stepIdx = 0;
+function animateBar() {
+  current = steps[stepIdx % steps.length];
+  barA.style.width = current + '%';
+  updateBarText();
+  stepIdx++;
+}
+animateBar();
+setInterval(animateBar, 3000);
+
+// Side nav active tracking
+const sections = ['hero','features','performance','services','usecases','comparison','vision','contact'];
+const navLinks = document.querySelectorAll('.side-nav a');
+function navClick(e) {
+  // Let the anchor handle scrolling
+  setTimeout(updateActiveNav, 300);
+}
+function updateActiveNav() {
+  let current = 'hero';
+  const scrollBottom = window.innerHeight + window.scrollY;
+  const docHeight = document.documentElement.scrollHeight;
+  // If near bottom, force last section
+  if (scrollBottom >= docHeight - 100) {
+    current = sections[sections.length - 1];
+  } else {
+    for (const id of sections) {
+      const el = document.getElementById(id);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= 150) current = id;
+      }
+    }
+  }
+  navLinks.forEach(link => {
+    link.classList.toggle('active', link.getAttribute('data-section') === current);
+  });
+}
+window.addEventListener('scroll', updateActiveNav, {passive: true});
+updateActiveNav();
+</script>
+</body>
+</html>
